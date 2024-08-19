@@ -1,0 +1,33 @@
+---
+---
+
+<button
+  id="connectWallet"
+  class="bg-secondary text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors"
+>
+  Connect Wallet
+</button>
+
+<p id="walletStatus" class="mt-2"></p>
+
+<script>
+  const connectButton = document.getElementById('connectWallet');
+  const statusElement = document.getElementById('walletStatus');
+
+  async function connectWallet() {
+    if (typeof window.mina === 'undefined') {
+      statusElement.textContent = 'Auro Wallet is not installed';
+      return;
+    }
+
+    try {
+      const accounts = await window.mina.requestAccounts();
+      connectButton.textContent = `Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+      statusElement.textContent = '';
+    } catch (error) {
+      statusElement.textContent = `Error: ${error.message}`;
+    }
+  }
+
+  connectButton.addEventListener('click', connectWallet);
+</script>

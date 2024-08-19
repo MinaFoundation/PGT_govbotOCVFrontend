@@ -1,0 +1,43 @@
+---
+
+---
+
+<div class="mt-4">
+  <span id="currentNetwork">Current Network: Loading...</span>
+  <button
+    id="switchNetwork"
+    class="ml-2 bg-accent text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors"
+  >
+    Switch Network
+  </button>
+</div>
+
+<script>
+  const networkSpan = document.getElementById("currentNetwork")!;
+  const switchButton = document.getElementById("switchNetwork")!;
+
+  async function getCurrentNetwork() {
+    try {
+      const network = await window.mina.requestNetwork();
+      networkSpan.textContent = `Current Network: ${network.networkID}`;
+      return network.networkID;
+    } catch (error) {
+      networkSpan.textContent = `Error: ${error.message}`;
+    }
+  }
+
+  async function switchNetwork() {
+    try {
+      const currentNetwork = await getCurrentNetwork();
+      const newNetwork =
+        currentNetwork === "mina:mainnet" ? "mina:testnet" : "mina:mainnet";
+      await window.mina.switchChain({ networkID: newNetwork });
+      await getCurrentNetwork();
+    } catch (error) {
+      networkSpan.textContent = `Error: ${error.message}`;
+    }
+  }
+
+  getCurrentNetwork();
+  switchButton.addEventListener("click", switchNetwork);
+</script>

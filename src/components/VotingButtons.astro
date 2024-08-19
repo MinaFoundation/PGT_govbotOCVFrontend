@@ -1,0 +1,60 @@
+---
+const { proposalId } = Astro.props;
+
+import { sendVoteTransaction, verifyCorrectNetwork } from '../utils/walletUtils';
+const expectedNetwork = import.meta.env.VITE_DEFAULT_NETWORK;
+
+// TODO: is this the best way of passing data?
+const sendVoteTransactionStr = sendVoteTransaction.toString();
+const verifyCorrectNetworkStr = verifyCorrectNetwork.toString();
+---
+
+<div class="mt-4">
+  <button
+    id="voteYes"
+    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors mr-2"
+    data-proposal-id={proposalId}
+  >
+    Vote For Approval
+  </button>
+  <button
+    id="voteNo"
+    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors"
+    data-proposal-id={proposalId}
+  >
+    Unvote/Vote For Rejection
+  </button>
+</div>
+
+<p id="voteStatus" class="mt-2"></p>
+
+<script is:inline define:vars={{ sendVoteTransactionStr, verifyCorrectNetworkStr, proposalId, expectedNetwork }}>
+
+  // TODO: DANGER! evals
+  const sendVoteTransaction = eval(`(${sendVoteTransactionStr})`);
+  const verifyCorrectNetwork = eval(`(${verifyCorrectNetworkStr})`);
+
+  const voteYesButton = document.getElementById('voteYes');
+  const voteNoButton = document.getElementById('voteNo');
+  const statusElement = document.getElementById('voteStatus');
+
+  async function vote(voteType, proposalId) {
+    try {
+      const isCorrectNetwork = await verifyCorrectNetwork(expectedNetwork);
+      
+      if (!isCorrectNetwork) {
+        throw new Error(`Please switch to the correct network: ${expectedNetwork}`);
+      }
+
+      const result = await sendVoteTransaction(voteType, proposalId);
+      statusElement.textContent = `Vote submitted, transaction hash: ${result.hash}`;
+      statusElement.className = 'mt-2 text-green-500';
+    } catch (error) {
+      statusElement.textContent = `Error: ${error.message}`;
+      statusElement.className = 'mt-2 text-red-500';
+    }
+  }
+
+  voteYesButton.addEventListener('click', () => vote('yes', voteYesButton.dataset.proposalId));
+  voteNoButton.addEventListener('click', () => vote('no', voteNoButton.dataset.proposalId));
+</script>
