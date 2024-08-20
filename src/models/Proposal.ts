@@ -21,7 +21,7 @@ export interface ProposalAttributes {
   status: ProposalStatus;
 }
 
-class Proposal extends Model {
+export class Proposal extends Model {
 }
 
 Proposal.init(
