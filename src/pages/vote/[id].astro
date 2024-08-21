@@ -1,40 +1,116 @@
 ---
-import MainLayout from '../../layouts/MainLayout.astro';
-import WalletConnectButton from '../../components/WalletConnectButton.astro';
-import NetworkSwitch from '../../components/NetworkSwitch.astro';
-import VotingButtons from '../../components/VotingButtons.astro';
-import Proposal from '../../models/Proposal';
+import MainLayout from "../../layouts/MainLayout.astro";
+import ProposalCard from "../../components/ProposalCard.astro";
+import VotingInterface from "../../components/VotingInterface.astro";
+import ProgressTracker from "../../components/ProgressTracker.astro";
+import StepInstructions from "../../components/StepInstructions.astro";
+import VotingExplanation from "../../components/VotingExplanation.astro";
+import { Proposal } from "../../models/Proposal";
+import { VotingStep } from "../../models/VotingState";
+import { currentStep, updateStep } from "../../store/votingStore";
+import { setProposalId } from "../../store/proposalStore";
 
-const url = new URL(Astro.request.url);
-const id = url.pathname.split('/').pop();
+const { id } = Astro.params;
+const proposalId = parseInt(id);
+const proposal = await Proposal.findByPk(proposalId);
+setProposalId(proposalId);
 
-let proposal = null;
-let error = null;
-
-try {
-  proposal = await Proposal.findByPk(id);
-  if (!proposal) {
-    error = 'Proposal not found';
-  }
-} catch (e) {
-  error = 'Error fetching proposal';
+if (!proposal) {
+  return Astro.redirect("/404");
 }
+
+const initialStep = VotingStep.ConnectWallet;
 ---
 
-<MainLayout title={proposal ? `Vote on ${proposal.name}` : 'Proposal Voting'}>
-  <WalletConnectButton />
-  <NetworkSwitch />
-  
-  {error ? (
-    <p class="text-red-500 mt-4">{error}</p>
-  ) : proposal ? (
-    <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold mb-4">{proposal.name}</h2>
-      <p class="mb-2"><strong>Proposal Link:</strong> <a href={proposal.uri} target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">{proposal.uri}</a></p>
-      <p class="mb-4"><strong>Budget:</strong> {proposal.budget} MINA</p>
-      <VotingButtons proposalId={proposal.id} />
+<MainLayout title={`Vote on ${proposal.name}`}>
+  <div class="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+    <div class="w-full md:w-1/2 space-y-6">
+      <ProposalCard proposal={proposal} />
+      <VotingInterface initialStep={initialStep} />
     </div>
-  ) : (
-    <p class="mt-4">Loading proposal...</p>
-  )}
+    <div class="w-full md:w-1/2 space-y-6">
+      <ProgressTracker currentStep={initialStep} />
+      <StepInstructions currentStep={initialStep} />
+      <VotingExplanation />
+    </div>
+  </div>
 </MainLayout>
+
+<script>
+  import { currentStep, updateStep } from "../../store/votingStore";
+  import { VotingStep } from "../../models/VotingState";
+
+  async function checkWalletConnection() {
+    if (typeof window.mina !== "undefined") {
+      try {
+        const accounts = await window.mina.getAccounts();
+        if (accounts.length > 0) {
+          updateStep(VotingStep.SwitchNetwork);
+          checkNetwork();
+        } else {
+          updateStep(VotingStep.ConnectWallet);
+        }
+      } catch (error) {
+        console.error("Error checking wallet connection:", error);
+        updateStep(VotingStep.ConnectWallet);
+      }
+    } else {
+      updateStep(VotingStep.ConnectWallet);
+    }
+    updateUI();
+  }
+
+  async function checkNetwork() {
+    if (typeof window.mina !== "undefined") {
+      try {
+        const network = await window.mina.requestNetwork();
+        if (network === "testnet") {
+          updateStep(VotingStep.Vote);
+        } else {
+          updateStep(VotingStep.SwitchNetwork);
+        }
+      } catch (error) {
+        console.error("Error checking network:", error);
+        updateStep(VotingStep.SwitchNetwork);
+      }
+    }
+    updateUI();
+  }
+
+  function updateUI() {
+    document.dispatchEvent(
+      new CustomEvent("votingStepChanged", {
+        detail: { step: currentStep.get() },
+      })
+    );
+  }
+
+  function updateInstructions() {
+    const instructionElement = document.querySelector(".current-instruction");
+    if (instructionElement) {
+      instructionElement.textContent = getInstructionText(currentStep.get());
+    }
+  }
+
+  function getInstructionText(step: VotingStep): string {
+    switch (step) {
+      case VotingStep.ConnectWallet:
+        return "Connect your Auro wallet to begin the voting process.";
+      case VotingStep.SwitchNetwork:
+        return "Please switch to the Mina testnet network in your Auro wallet, then click the 'Switch to Testnet' button.";
+      case VotingStep.Vote:
+        return "Cast your vote to approve or reject the proposal.";
+    }
+  }
+
+  currentStep.subscribe(updateInstructions);
+
+  // Check wallet connection on page load
+  checkWalletConnection();
+
+  // Listen for wallet connection changes
+  window.addEventListener("mina:accountsChanged", checkWalletConnection);
+
+  // Initial UI update
+  updateInstructions();
+</script>

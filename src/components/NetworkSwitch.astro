@@ -17,6 +17,11 @@
   const switchButton = document.getElementById("switchNetwork")!;
 
   async function getCurrentNetwork() {
+    if (typeof window.mina === "undefined") {
+      networkSpan.textContent = "Error: Auro Wallet not detected";
+      return;
+    }
+
     try {
       const network = await window.mina.requestNetwork();
       networkSpan.textContent = `Current Network: ${network.networkID}`;
@@ -27,17 +32,37 @@
   }
 
   async function switchNetwork() {
+    if (typeof window.mina === "undefined") {
+      networkSpan.textContent = "Error: Auro Wallet not detected";
+      return;
+    }
+
     try {
       const currentNetwork = await getCurrentNetwork();
       const newNetwork =
         currentNetwork === "mina:mainnet" ? "mina:testnet" : "mina:mainnet";
-      await window.mina.switchChain({ networkID: newNetwork });
-      await getCurrentNetwork();
+
+      const switchResult = await window.mina.switchChain({
+        networkID: newNetwork,
+      });
+
+      if ("networkID" in switchResult) {
+        networkSpan.textContent = `Switched to: ${switchResult.networkID}`;
+      } else {
+        networkSpan.textContent = `Error: ${switchResult.message}`;
+      }
     } catch (error) {
       networkSpan.textContent = `Error: ${error.message}`;
     }
   }
 
+  // Check current network on load
   getCurrentNetwork();
+
+  // Add event listener for network changes
+  window.mina?.on("chainChanged", (chainInfo) => {
+    networkSpan.textContent = `Network changed to: ${chainInfo.networkID}`;
+  });
+
   switchButton.addEventListener("click", switchNetwork);
 </script>
