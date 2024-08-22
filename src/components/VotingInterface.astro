@@ -1,0 +1,212 @@
+---
+import { VotingStep } from "../models/VotingState";
+import { currentProposalId } from "../store/proposalStore";
+import ErrorMessage from "./ErrorMessage.astro";
+
+interface Props {
+  initialStep: VotingStep;
+}
+
+const { initialStep } = Astro.props;
+const proposalId = currentProposalId.get();
+---
+
+<div class="space-y-4" data-proposal-id={proposalId}>
+  <div id="errorContainer" class="hidden">
+    <ErrorMessage message="" type="error" />
+  </div>
+  <div id="successContainer" class="hidden">
+    <ErrorMessage message="" type="success" />
+  </div>
+  <button
+    id="connectWallet"
+    class="w-full bg-purple-600 text-white px-6 py-3 rounded-full hover:bg-purple-700 transition-colors font-semibold"
+  >
+    Connect Wallet
+  </button>
+  <button
+    id="switchNetwork"
+    class="w-full bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-colors font-semibold"
+  >
+    Switch to Testnet
+  </button>
+  <div id="votingButtons" class="grid grid-cols-2 gap-4">
+    <button
+      id="approveButton"
+      class="bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-colors font-semibold"
+    >
+      Approve
+    </button>
+    <button
+      id="rejectButton"
+      class="bg-red-500 text-white px-6 py-3 rounded-full hover:bg-red-600 transition-colors font-semibold"
+    >
+      Reject
+    </button>
+  </div>
+</div>
+<script>
+  import { currentStep, updateStep } from "../store/votingStore";
+  import { NetworkService } from "../services/networkService";
+  import { VotingStep } from "../models/VotingState";
+  import { currentProposalId, setProposalId } from "../store/proposalStore";
+
+  const connectWalletButton = document.getElementById("connectWallet");
+  const switchNetworkButton = document.getElementById("switchNetwork");
+  const votingButtons = document.getElementById("votingButtons");
+  const approveButton = document.getElementById("approveButton");
+  const rejectButton = document.getElementById("rejectButton");
+  const errorContainer = document.getElementById("errorContainer");
+  const successContainer = document.getElementById("successContainer");
+
+  function showError(message: string) {
+    if (errorContainer && successContainer) {
+      const errorMessage = errorContainer.querySelector("div");
+      if (errorMessage) {
+        errorMessage.innerHTML = message;
+        errorContainer.classList.remove("hidden");
+        successContainer.classList.add("hidden");
+      }
+    }
+  }
+
+  function showSuccess(message: string, txHash: string | undefined) {
+    if (successContainer && errorContainer) {
+      const successMessage = successContainer.querySelector("div");
+      if (successMessage) {
+        successMessage.innerHTML = `${message}`;
+        if (txHash) {
+          successMessage.innerHTML = `${successMessage.innerHTML}<br><a href="https://minascan.io/devnet/tx/${txHash}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-600">View transaction on Minascan</a>`;
+        }
+        successContainer.classList.remove("hidden");
+        errorContainer.classList.add("hidden");
+      }
+    }
+  }
+
+  // Set the proposal ID in the store from the data attribute
+  const container = document.querySelector("[data-proposal-id]");
+  if (container) {
+    const proposalId = parseInt(
+      container.getAttribute("data-proposal-id") || ""
+    );
+    if (!isNaN(proposalId)) {
+      setProposalId(proposalId);
+    }
+  }
+
+  function updateButtonVisibility(step: VotingStep) {
+    connectWalletButton.style.display =
+      step === VotingStep.ConnectWallet ? "block" : "none";
+    switchNetworkButton.style.display =
+      step === VotingStep.SwitchNetwork ? "block" : "none";
+    votingButtons.style.display = step === VotingStep.Vote ? "grid" : "none";
+  }
+
+  async function checkWalletConnection() {
+    if (typeof window.mina !== "undefined") {
+      try {
+        const accounts = await window.mina.getAccounts();
+        if (accounts.length > 0) {
+          updateStep(VotingStep.SwitchNetwork);
+          await checkNetwork();
+        } else {
+          updateStep(VotingStep.ConnectWallet);
+        }
+      } catch (error) {
+        showError("Error checking wallet connection. Please try again.");
+        updateStep(VotingStep.ConnectWallet);
+      }
+    } else {
+      showError("Auro Wallet not detected. Please install it and try again.");
+      updateStep(VotingStep.ConnectWallet);
+    }
+    updateButtonVisibility(currentStep.get());
+  }
+
+  async function checkNetwork() {
+    if (typeof window.mina !== "undefined") {
+      try {
+        const currentNetwork = await NetworkService.getCurrentNetwork();
+        if (currentNetwork.networkID === "mina:testnet") {
+          updateStep(VotingStep.Vote);
+        } else {
+          updateStep(VotingStep.SwitchNetwork);
+        }
+      } catch (error) {
+        showError("Error checking network. Please try again.");
+        updateStep(VotingStep.SwitchNetwork);
+      }
+    } else {
+      showError("Auro Wallet not detected. Please install it and try again.");
+    }
+    updateButtonVisibility(currentStep.get());
+  }
+
+  connectWalletButton.addEventListener("click", async () => {
+    if (typeof window.mina !== "undefined") {
+      try {
+        await window.mina.requestAccounts();
+        await checkWalletConnection();
+      } catch (error) {
+        showError("Error connecting wallet. Please try again.");
+      }
+    }
+  });
+
+  switchNetworkButton.addEventListener("click", async () => {
+    if (typeof window.mina !== "undefined") {
+      try {
+        const switchResult = await NetworkService.switchNetwork("mina:testnet");
+        if (switchResult.networkID === "mina:testnet") {
+          await checkNetwork();
+        } else {
+          showError(
+            "Failed to switch to the Mina testnet. Please try again or switch manually in your Auro wallet."
+          );
+        }
+      } catch (error) {
+        showError(
+          "An error occurred while switching the network. Please try again or switch manually in your Auro wallet."
+        );
+      }
+    }
+  });
+
+  async function vote(decision: string) {
+    const proposalId = currentProposalId.get();
+    if (proposalId === null) {
+      showError("No proposal ID found. Please try again.");
+      return;
+    }
+    try {
+      const memo = `${decision} ${proposalId}`;
+      const hash = await window.mina.sendPayment({
+        to: "B62qiburnzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzmp7r7UN6X",
+        amount: 0.0001,
+        memo: memo,
+      });
+
+      const decisionStr: string =
+        decision === "yes" ? "YES/APPROVE" : "NO/REJECT";
+      showSuccess(
+        `Voted ${decisionStr} on Proposal with ID ${proposalId}.`,
+        hash.hash
+      );
+    } catch (error) {
+      showError(`An error occurred while voting: ${error.message}`);
+    }
+  }
+
+  approveButton.addEventListener("click", async () => await vote("yes"));
+  rejectButton.addEventListener("click", async () => await vote("no"));
+
+  // Initial check
+  checkWalletConnection();
+
+  // Listen for wallet connection changes
+  window.addEventListener("mina:accountsChanged", checkWalletConnection);
+
+  // Subscribe to step changes
+  currentStep.subscribe(updateButtonVisibility);
+</script>
