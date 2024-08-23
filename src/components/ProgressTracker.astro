@@ -1,0 +1,66 @@
+---
+import { VotingStep } from "../models/VotingState";
+
+const steps = [
+  VotingStep.ConnectWallet,
+  VotingStep.SwitchNetwork,
+  VotingStep.Vote,
+];
+---
+
+<div class="flex items-center justify-between mb-8">
+  <div class="flex items-center w-full">
+    {
+      steps.map((step, index) => (
+        <>
+          <div
+            class={`progress-step w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold`}
+            data-step={step}
+          >
+            {index + 1}
+          </div>
+          {index < steps.length - 1 && (
+            <div class={`flex-1 h-1 mx-2 progress-connector`} />
+          )}
+        </>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  import { currentStep } from "../store/votingStore";
+
+  function updateProgressTracker() {
+    const progressSteps = document.querySelectorAll(".progress-step");
+    const connectors = document.querySelectorAll(".progress-connector");
+    const currentStepValue = currentStep.get();
+
+    progressSteps.forEach((step, index) => {
+      const stepValue = parseInt(step.getAttribute("data-step") || "0", 10);
+      if (stepValue <= currentStepValue) {
+        step.classList.add("bg-purple-600", "text-white");
+        step.classList.remove("bg-gray-200", "text-gray-600");
+      } else {
+        step.classList.remove("bg-purple-600", "text-white");
+        step.classList.add("bg-gray-200", "text-gray-600");
+      }
+
+      if (index < connectors.length) {
+        if (stepValue < currentStepValue) {
+          connectors[index].classList.add("bg-purple-600");
+          connectors[index].classList.remove("bg-gray-200");
+        } else {
+          connectors[index].classList.remove("bg-purple-600");
+          connectors[index].classList.add("bg-gray-200");
+        }
+      }
+    });
+  }
+
+  // Initial update
+  updateProgressTracker();
+
+  // Subscribe to changes
+  currentStep.subscribe(updateProgressTracker);
+</script>

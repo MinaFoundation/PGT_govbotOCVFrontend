@@ -1,0 +1,43 @@
+---
+import { VotingStep } from "../models/VotingState";
+import { currentStep } from "../store/votingStore";
+
+const instructions = {
+  [VotingStep.ConnectWallet]:
+    "Connect your Auro wallet to begin the voting process.",
+  [VotingStep.SwitchNetwork]:
+    "Switch to the Mina testnet network in your wallet.",
+  [VotingStep.Vote]: "Cast your vote to approve or reject the proposal.",
+};
+---
+
+<div class="bg-white rounded-lg shadow-md p-6 border border-purple-200">
+  <h3 class="text-xl font-semibold mb-4 text-purple-800">Current Step</h3>
+  <p id="stepInstruction" class="text-gray-700"></p>
+</div>
+
+<script>
+  import { currentStep } from "../store/votingStore";
+  import { VotingStep } from "../models/VotingState";
+
+  const instructionElement = document.getElementById("stepInstruction");
+  const instructions = {
+    [VotingStep.ConnectWallet]:
+      "Connect your Auro wallet to begin the voting process.",
+    [VotingStep.SwitchNetwork]:
+      "Switch to the Mina testnet network in your wallet.",
+    [VotingStep.Vote]: "Cast your vote to approve or reject the proposal.",
+  };
+
+  function updateInstruction(step: VotingStep) {
+    if (instructionElement) {
+      instructionElement.textContent = instructions[step];
+    }
+  }
+
+  // Initial update
+  updateInstruction(currentStep.get());
+
+  // Subscribe to changes
+  currentStep.subscribe(updateInstruction);
+</script>

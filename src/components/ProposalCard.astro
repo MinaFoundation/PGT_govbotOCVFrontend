@@ -1,0 +1,63 @@
+---
+import type { ProposalData } from "../models/Proposal";
+
+interface Props {
+  proposal: ProposalData;
+}
+
+const { proposal } = Astro.props;
+---
+
+<div
+  class="bg-white rounded-xl shadow-lg p-6 border border-purple-200 hover:shadow-xl transition-shadow duration-300"
+>
+  <div class="flex flex-col items-center text-center">
+    <h2 class="text-2xl font-bold mb-1 text-purple-800">Proposal Details</h2>
+    <h3
+      class="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+    >
+      {proposal.name}
+    </h3>
+    <p class="text-sm text-gray-500 mb-4">ID: {proposal.id}</p>
+    <div class="w-full mb-4 bg-purple-50 rounded-lg p-3">
+      <div class="flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-pink-500 mr-2"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+            clip-rule="evenodd"></path>
+        </svg>
+        <p class="text-gray-700 font-medium">
+          <span class="font-semibold">Budget:</span>
+          <span class="ml-1 font-mono"
+            >{proposal.budget.toLocaleString()} MINA</span
+          >
+        </p>
+      </div>
+    </div>
+    <a
+      href={proposal.uri}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2 px-4 rounded-full hover:from-purple-700 hover:to-pink-700 transition-colors duration-300 flex items-center justify-center"
+    >
+      View Full Proposal
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 inline-block ml-1"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+          clip-rule="evenodd"></path>
+      </svg>
+    </a>
+  </div>
+</div>
