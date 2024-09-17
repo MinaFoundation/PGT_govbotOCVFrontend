@@ -56,9 +56,9 @@
   getCurrentNetwork();
 
   // Add event listener for network changes
-  window.mina?.on("chainChanged", (chainInfo) => {
-    networkSpan.textContent = `Network changed to: ${chainInfo.networkID}`;
-  });
+  //window.mina?.on("chainChanged", (chainInfo) => {
+  //  networkSpan.textContent = `Network changed to: ${chainInfo.networkID}`;
+  // });
 
   switchButton.addEventListener("click", switchNetwork);
 </script>
