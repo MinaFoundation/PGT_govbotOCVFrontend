@@ -5,17 +5,18 @@ import VotingInterface from "../../components/VotingInterface.astro";
 import ProgressTracker from "../../components/ProgressTracker.astro";
 import StepInstructions from "../../components/StepInstructions.astro";
 import VotingExplanation from "../../components/VotingExplanation.astro";
-import { Proposal } from "../../models/Proposal";
 import { VotingStep } from "../../models/VotingState";
-import { currentStep, updateStep } from "../../store/votingStore";
 import { setProposalId } from "../../store/proposalStore";
+import { fetchProposal } from "../../services/apiService";
 
 const { id } = Astro.params;
 const proposalId = parseInt(id);
-const proposal = await Proposal.findByPk(proposalId);
-setProposalId(proposalId);
+let proposal;
 
-if (!proposal) {
+try {
+  proposal = await fetchProposal(proposalId);
+  setProposalId(proposalId);
+} catch (error) {
   return Astro.redirect("/404");
 }
 

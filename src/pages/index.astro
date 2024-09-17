@@ -1,43 +1,46 @@
 ---
-import MainLayout from '../layouts/MainLayout.astro';
-import WalletConnectButton from '../components/WalletConnectButton.astro';
-import NetworkSwitch from '../components/NetworkSwitch.astro';
-import Proposal from '../models/Proposal';
+import MainLayout from "../layouts/MainLayout.astro";
+import WalletConnectButton from "../components/WalletConnectButton.astro";
+import NetworkSwitch from "../components/NetworkSwitch.astro";
+import { fetchActiveProposals } from "../services/apiService";
+import type { ProposalAttributes } from "../models/Proposal";
 
-let proposals: Proposal[] = [];
+let proposals: ProposalAttributes[] = [];
 let error = null;
 
 try {
-  proposals = await Proposal.findAll({
-    where: {
-      status: 'FUNDING_VOTE'
-    },
-    order: [['createdAt', 'DESC']]
-  });
+  proposals = await fetchActiveProposals();
 } catch (e) {
-  error = 'Error fetching proposals';
+  error = "Error fetching proposals";
 }
 ---
 
 <MainLayout title="Mina Proposal Voting">
   <WalletConnectButton />
   <NetworkSwitch />
-  
+
   <h2 class="text-2xl font-bold mt-8 mb-4">Active Proposals</h2>
-  
-  {error ? (
-    <p class="text-red-500">{error}</p>
-  ) : proposals.length > 0 ? (
-    <ul class="space-y-4">
-      {proposals.map((proposal) => (
-        <li class="bg-white p-4 rounded-lg shadow-md">
-          <h3 class="text-xl font-semibold mb-2">{proposal.name}</h3>
-          <p class="mb-2">Budget: {proposal.budget} MINA</p>
-          <a href={`/vote/${proposal.id}`} class="text-blue-500 hover:underline">Vote on this proposal</a>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p>No active proposals at the moment.</p>
-  )}
+
+  {
+    error ? (
+      <p class="text-red-500">{error}</p>
+    ) : proposals.length > 0 ? (
+      <ul class="space-y-4">
+        {proposals.map((proposal) => (
+          <li class="bg-white p-4 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-2">{proposal.name}</h3>
+            <p class="mb-2">Budget: {proposal.budget} MINA</p>
+            <a
+              href={`/vote/${proposal.id}`}
+              class="text-blue-500 hover:underline"
+            >
+              Vote on this proposal
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>No active proposals at the moment.</p>
+    )
+  }
 </MainLayout>
