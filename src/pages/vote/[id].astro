@@ -10,13 +10,17 @@ import { setProposalId } from "../../store/proposalStore";
 import { fetchProposal } from "../../services/apiService";
 
 const { id } = Astro.params;
-const proposalId = parseInt(id);
+const proposalId = id ? parseInt(id) : null;
 let proposal;
 
-try {
-  proposal = await fetchProposal(proposalId);
-  setProposalId(proposalId);
-} catch (error) {
+if (proposalId !== null) {
+  try {
+    proposal = await fetchProposal(proposalId);
+    setProposalId(proposalId);
+  } catch (error) {
+    return Astro.redirect("/404");
+  }
+} else {
   return Astro.redirect("/404");
 }
 
@@ -40,6 +44,7 @@ const initialStep = VotingStep.ConnectWallet;
 <script>
   import { currentStep, updateStep } from "../../store/votingStore";
   import { VotingStep } from "../../models/VotingState";
+  import { NetworkService } from "../../services/networkService";
 
   async function checkWalletConnection() {
     if (typeof window.mina !== "undefined") {
@@ -64,8 +69,8 @@ const initialStep = VotingStep.ConnectWallet;
   async function checkNetwork() {
     if (typeof window.mina !== "undefined") {
       try {
-        const network = await window.mina.requestNetwork();
-        if (network === "testnet") {
+        const network = await NetworkService.getCurrentNetwork();
+        if (network.networkID === "testnet") {
           updateStep(VotingStep.Vote);
         } else {
           updateStep(VotingStep.SwitchNetwork);

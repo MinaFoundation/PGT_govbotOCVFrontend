@@ -45,6 +45,7 @@ const proposalId = currentProposalId.get();
     </button>
   </div>
 </div>
+
 <script>
   import { currentStep, updateStep } from "../store/votingStore";
   import { NetworkService } from "../services/networkService";
@@ -96,11 +97,13 @@ const proposalId = currentProposalId.get();
   }
 
   function updateButtonVisibility(step: VotingStep) {
-    connectWalletButton.style.display =
-      step === VotingStep.ConnectWallet ? "block" : "none";
-    switchNetworkButton.style.display =
-      step === VotingStep.SwitchNetwork ? "block" : "none";
-    votingButtons.style.display = step === VotingStep.Vote ? "grid" : "none";
+    if (connectWalletButton && switchNetworkButton && votingButtons) {
+      connectWalletButton.style.display =
+        step === VotingStep.ConnectWallet ? "block" : "none";
+      switchNetworkButton.style.display =
+        step === VotingStep.SwitchNetwork ? "block" : "none";
+      votingButtons.style.display = step === VotingStep.Vote ? "grid" : "none";
+    }
   }
 
   async function checkWalletConnection() {
@@ -143,7 +146,7 @@ const proposalId = currentProposalId.get();
     updateButtonVisibility(currentStep.get());
   }
 
-  connectWalletButton.addEventListener("click", async () => {
+  connectWalletButton?.addEventListener("click", async () => {
     if (typeof window.mina !== "undefined") {
       try {
         await window.mina.requestAccounts();
@@ -154,7 +157,7 @@ const proposalId = currentProposalId.get();
     }
   });
 
-  switchNetworkButton.addEventListener("click", async () => {
+  switchNetworkButton?.addEventListener("click", async () => {
     if (typeof window.mina !== "undefined") {
       try {
         const switchResult = await NetworkService.switchNetwork("mina:testnet");
@@ -173,7 +176,7 @@ const proposalId = currentProposalId.get();
     }
   });
 
-  async function vote(decision: string) {
+  async function vote(decision: "yes" | "no") {
     const proposalId = currentProposalId.get();
     if (proposalId === null) {
       showError("No proposal ID found. Please try again.");
@@ -181,6 +184,9 @@ const proposalId = currentProposalId.get();
     }
     try {
       const memo = `${decision} ${proposalId}`;
+      if (typeof window.mina === "undefined") {
+        throw new Error("Auro Wallet not detected");
+      }
       const hash = await window.mina.sendPayment({
         to: "B62qiburnzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzmp7r7UN6X",
         amount: 0.0001,
@@ -194,12 +200,14 @@ const proposalId = currentProposalId.get();
         hash.hash
       );
     } catch (error) {
-      showError(`An error occurred while voting: ${error.message}`);
+      showError(
+        `An error occurred while voting: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
-  approveButton.addEventListener("click", async () => await vote("yes"));
-  rejectButton.addEventListener("click", async () => await vote("no"));
+  approveButton?.addEventListener("click", async () => await vote("yes"));
+  rejectButton?.addEventListener("click", async () => await vote("no"));
 
   // Initial check
   checkWalletConnection();

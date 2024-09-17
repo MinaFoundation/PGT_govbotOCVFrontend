@@ -1,6 +1,11 @@
 ---
 import { VotingStep } from "../models/VotingState";
-import { currentStep } from "../store/votingStore";
+
+interface Props {
+  currentStep: VotingStep;
+}
+
+const { currentStep } = Astro.props;
 
 const instructions = {
   [VotingStep.ConnectWallet]:
@@ -13,7 +18,7 @@ const instructions = {
 
 <div class="bg-white rounded-lg shadow-md p-6 border border-purple-200">
   <h3 class="text-xl font-semibold mb-4 text-purple-800">Current Step</h3>
-  <p id="stepInstruction" class="text-gray-700"></p>
+  <p id="stepInstruction" class="text-gray-700">{instructions[currentStep]}</p>
 </div>
 
 <script>

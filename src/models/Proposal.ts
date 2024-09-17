@@ -1,6 +1,3 @@
-import { Model, DataTypes } from "sequelize";
-import sequelize from "../db/connection";
-
 export enum ProposalStatus {
   DRAFT = "DRAFT",
   CONSIDERATION_PHASE = "CONSIDERATION_VOTE",

@@ -27,7 +27,7 @@
       networkSpan.textContent = `Current Network: ${network.networkID}`;
       return network.networkID;
     } catch (error) {
-      networkSpan.textContent = `Error: ${error.message}`;
+      networkSpan.textContent = `Error: ${error instanceof Error ? error.message : "Unknown error"}`;
     }
   }
 
@@ -46,13 +46,9 @@
         networkID: newNetwork,
       });
 
-      if ("networkID" in switchResult) {
-        networkSpan.textContent = `Switched to: ${switchResult.networkID}`;
-      } else {
-        networkSpan.textContent = `Error: ${switchResult.message}`;
-      }
+      networkSpan.textContent = `Switched to: ${switchResult.networkID}`;
     } catch (error) {
-      networkSpan.textContent = `Error: ${error.message}`;
+      networkSpan.textContent = `Error: ${error instanceof Error ? error.message : "Unknown error"}`;
     }
   }
 

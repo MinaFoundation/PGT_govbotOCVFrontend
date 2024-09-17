@@ -1,8 +1,4 @@
 ---
-import {
-  sendVoteTransaction,
-  verifyCorrectNetwork,
-} from "../utils/walletUtils";
 import { currentProposalId } from "../store/proposalStore";
 
 // Get the proposal ID from the store
@@ -48,16 +44,19 @@ const proposalId = currentProposalId.get();
     }
   }
 
-  async function vote(voteType) {
+  async function vote(voteType: "yes" | "no") {
     const proposalId = currentProposalId.get();
     if (proposalId === null) {
-      statusElement.textContent =
-        "Error: No proposal ID found. Please try again.";
-      statusElement.className = "mt-2 text-red-500";
+      if (statusElement) {
+        statusElement.textContent =
+          "Error: No proposal ID found. Please try again.";
+        statusElement.className = "mt-2 text-red-500";
+      }
       return;
     }
 
     try {
+      const expectedNetwork = "mina:testnet";
       const isCorrectNetwork = await verifyCorrectNetwork(expectedNetwork);
 
       if (!isCorrectNetwork) {
@@ -67,14 +66,18 @@ const proposalId = currentProposalId.get();
       }
 
       const result = await sendVoteTransaction(voteType, proposalId);
-      statusElement.textContent = `Vote submitted, transaction hash: ${result.hash}`;
-      statusElement.className = "mt-2 text-green-500";
+      if (statusElement) {
+        statusElement.textContent = `Vote submitted, transaction hash: ${result.hash}`;
+        statusElement.className = "mt-2 text-green-500";
+      }
     } catch (error) {
-      statusElement.textContent = `Error: ${error.message}`;
-      statusElement.className = "mt-2 text-red-500";
+      if (statusElement) {
+        statusElement.textContent = `Error: ${error instanceof Error ? error.message : "Unknown error"}`;
+        statusElement.className = "mt-2 text-red-500";
+      }
     }
   }
 
-  voteYesButton.addEventListener("click", () => vote("yes"));
-  voteNoButton.addEventListener("click", () => vote("no"));
+  voteYesButton?.addEventListener("click", () => vote("yes"));
+  voteNoButton?.addEventListener("click", () => vote("no"));
 </script>

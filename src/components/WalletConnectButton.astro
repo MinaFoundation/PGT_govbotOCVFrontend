@@ -1,9 +1,10 @@
 ---
+
 ---
 
 <button
   id="connectWallet"
-  class="bg-secondary text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors"
+  class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors"
 >
   Connect Wallet
 </button>
@@ -11,23 +12,31 @@
 <p id="walletStatus" class="mt-2"></p>
 
 <script>
-  const connectButton = document.getElementById('connectWallet');
-  const statusElement = document.getElementById('walletStatus');
+  const connectButton = document.getElementById("connectWallet");
+  const statusElement = document.getElementById("walletStatus");
 
   async function connectWallet() {
-    if (typeof window.mina === 'undefined') {
-      statusElement.textContent = 'Auro Wallet is not installed';
+    if (typeof window.mina === "undefined") {
+      if (statusElement)
+        statusElement.textContent = "Auro Wallet is not installed";
       return;
     }
 
     try {
       const accounts = await window.mina.requestAccounts();
-      connectButton.textContent = `Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
-      statusElement.textContent = '';
+      if (accounts.length > 0) {
+        if (connectButton)
+          connectButton.textContent = `Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+        if (statusElement) statusElement.textContent = "";
+      }
     } catch (error) {
-      statusElement.textContent = `Error: ${error.message}`;
+      if (statusElement)
+        statusElement.textContent = `Error: ${error instanceof Error ? error.message : "Unknown error"}`;
     }
   }
 
-  connectButton.addEventListener('click', connectWallet);
+  connectButton?.addEventListener("click", connectWallet);
+
+  // Check initial connection status
+  connectWallet();
 </script>
