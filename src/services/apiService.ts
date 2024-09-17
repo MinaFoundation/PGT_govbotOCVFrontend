@@ -1,6 +1,6 @@
 import type { ProposalAttributes } from "../models/Proposal";
 
-const { API_BASE_URL } = import.meta.env;
+const { API_BASE_URL } = process.env;
 
 export async function fetchProposal(id: number): Promise<ProposalAttributes> {
   const response = await fetch(`${API_BASE_URL}/api/projects/${id}`);
@@ -13,7 +13,7 @@ export async function fetchProposal(id: number): Promise<ProposalAttributes> {
 
 export async function fetchActiveProposals(): Promise<ProposalAttributes[]> {
   const response = await fetch(
-    `${API_BASE_URL}/api/projects?status=FUNDING_VOTE`
+    `${API_BASE_URL}/api/projects?status=FUNDING_VOTE`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch active proposals");
