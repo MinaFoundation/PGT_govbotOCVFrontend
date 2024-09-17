@@ -1,32 +1,33 @@
-import type { APIRoute } from 'astro';
-import Proposal from '../../../models/Proposal';
+import type { APIRoute } from "astro";
+import { fetchProposal } from "../../../services/apiService";
 
-export const get: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params }) => {
   const { id } = params;
-  
-  try {
-    const proposal = await Proposal.findByPk(id);
-    if (proposal) {
-      return new Response(JSON.stringify(proposal), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-    } else {
-      return new Response(JSON.stringify({ error: 'Proposal not found' }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-    }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-      status: 500,
+
+  if (!id || isNaN(parseInt(id))) {
+    return new Response(JSON.stringify({ error: "Invalid proposal ID" }), {
+      status: 400,
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
   }
-}
+
+  try {
+    const proposal = await fetchProposal(parseInt(id));
+    return new Response(JSON.stringify(proposal), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching proposal:", error);
+    return new Response(JSON.stringify({ error: "Failed to fetch proposal" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+};
