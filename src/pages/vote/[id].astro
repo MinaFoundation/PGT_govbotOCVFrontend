@@ -18,9 +18,11 @@ if (proposalId !== null) {
     proposal = await fetchProposal(proposalId);
     setProposalId(proposalId);
   } catch (error) {
+    console.error("Error fetching proposal:", error);
     return Astro.redirect("/404");
   }
 } else {
+  console.error("Invalid proposal ID:", id);
   return Astro.redirect("/404");
 }
 

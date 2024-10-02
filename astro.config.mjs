@@ -8,5 +8,11 @@ export default defineConfig({
   output: 'server',
   adapter: node({
     mode: "standalone"
-  })
+  }),
+  // Add this section to handle 404 errors
+  build: {
+    errorPages: {
+      404: '/404'
+    }
+  }
 });
