@@ -3,12 +3,11 @@ FROM node:22
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
 RUN npm ci
 
 COPY . .
+RUN npm run build
 
-EXPOSE 4321
-
-# TODO: in the future, build and then run. For now, expose the dev server
-CMD ["npm", "run", "dev"]
+ENV HOST=0.0.0.0
+ENV PORT=4321
+CMD ["node", "./dist/server/entry.mjs"]
