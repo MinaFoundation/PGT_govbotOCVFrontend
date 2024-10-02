@@ -1,9 +1,12 @@
-export const sendVoteTransaction = async (vote: 'yes' | 'no', proposalId: number): Promise<{ hash: string }> => {
+export const sendVoteTransaction = async (
+  vote: "yes" | "no",
+  proposalId: number
+): Promise<{ hash: string }> => {
   const memo = `${vote} ${proposalId}`;
-  const burnAddress = 'B62qiburnzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzmp7r7UN6X';
-  
+  const burnAddress = "B62qiburnzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzmp7r7UN6X";
+
   if (!window.mina) {
-    throw new Error('Auro Wallet is not installed');
+    throw new Error("Auro Wallet is not installed");
   }
 
   return await window.mina.sendPayment({
@@ -13,9 +16,11 @@ export const sendVoteTransaction = async (vote: 'yes' | 'no', proposalId: number
   });
 };
 
-export const verifyCorrectNetwork = async (expectedNetwork: string): Promise<boolean> => {
+export const verifyCorrectNetwork = async (
+  expectedNetwork: string
+): Promise<boolean> => {
   if (!window.mina) {
-    throw new Error('Auro Wallet is not installed');
+    throw new Error("Auro Wallet is not installed");
   }
 
   const currentNetwork = await window.mina.requestNetwork();
